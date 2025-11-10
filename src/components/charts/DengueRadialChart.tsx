@@ -1,5 +1,5 @@
 import { TrendingUp } from "lucide-react";
-import { LabelList, RadialBar, RadialBarChart } from "recharts";
+import { Label, LabelList, RadialBar, RadialBarChart } from "recharts";
 import {
   Card,
   CardContent,
@@ -15,40 +15,19 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { useHighRiskAreas } from "@/hooks/useDengueData";
+import { motion } from "framer-motion";
 
-// Color palette for high risk areas
+// 🎨 Warna berdasarkan level risiko (gradasi)
 const riskAreaColors = [
-  "var(--color-risk-1)",
-  "var(--color-risk-2)",
-  "var(--color-risk-3)",
-  "var(--color-risk-4)",
-  "var(--color-risk-5)",
+  "#ff4d4f", // Risk 1 - Merah (sangat tinggi)
+  "#ff7a45", // Risk 2 - Oranye
+  "#ffa940", // Risk 3 - Kuning-oranye
+  "#ffc53d", // Risk 4 - Kuning
+  "#36cfc9", // Risk 5 - Biru kehijauan
 ];
 
 const chartConfig = {
-  totalCases: {
-    label: "Total Cases",
-  },
-  "risk-1": {
-    label: "High Risk Area 1",
-    color: "hsl(var(--chart-1))",
-  },
-  "risk-2": {
-    label: "High Risk Area 2",
-    color: "hsl(var(--chart-2))",
-  },
-  "risk-3": {
-    label: "High Risk Area 3",
-    color: "hsl(var(--chart-3))",
-  },
-  "risk-4": {
-    label: "High Risk Area 4",
-    color: "hsl(var(--chart-4))",
-  },
-  "risk-5": {
-    label: "High Risk Area 5",
-    color: "hsl(var(--chart-5))",
-  },
+  totalCases: { label: "Total Cases" },
 } satisfies ChartConfig;
 
 export function DengueRadialChart() {
@@ -56,44 +35,32 @@ export function DengueRadialChart() {
 
   if (loading) {
     return (
-      <Card className="flex flex-col">
-        <CardHeader className="items-center pb-0">
-          <CardTitle>High Risk Areas - Radial Chart</CardTitle>
-          <CardDescription>Loading data...</CardDescription>
-        </CardHeader>
-        <CardContent className="flex-1 pb-0 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </CardContent>
+      <Card className="flex flex-col items-center justify-center h-[300px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="text-sm mt-2 text-muted-foreground">Loading data...</p>
       </Card>
     );
   }
 
   if (error) {
     return (
-      <Card className="flex flex-col">
-        <CardHeader className="items-center pb-0">
-          <CardTitle>High Risk Areas</CardTitle>
-          <CardDescription>Error loading data</CardDescription>
-        </CardHeader>
-        <CardContent className="flex-1 pb-0 flex items-center justify-center">
-          <div className="text-red-600">Error: {error}</div>
-        </CardContent>
+      <Card className="flex flex-col items-center justify-center h-[300px]">
+        <p className="text-red-500 font-medium">Error loading data</p>
+        <p className="text-sm text-muted-foreground">{error}</p>
       </Card>
     );
   }
 
-  // Transform data for radial chart
   const radialData = highRiskAreas.slice(0, 5).map((area, index) => ({
     areaName:
-      area.regencyName.length > 10
-        ? area.regencyName.substring(0, 10) + "..."
+      area.regencyName.length > 12
+        ? area.regencyName.substring(0, 12) + "..."
         : area.regencyName,
     totalCases: area.totalCases,
-    fill: riskAreaColors[index] || riskAreaColors[0],
+    fill: riskAreaColors[index] || "#999",
     province: area.provinceName,
   }));
 
-  // Find area with highest cases for the footer
   const highestRiskArea =
     highRiskAreas.length > 0
       ? highRiskAreas.reduce((prev, current) =>
@@ -101,52 +68,83 @@ export function DengueRadialChart() {
         )
       : null;
 
+  const totalSum = radialData.reduce((sum, item) => sum + item.totalCases, 0);
+
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col shadow-lg rounded-2xl">
       <CardHeader className="items-center pb-0">
-        <CardTitle>High Risk Areas</CardTitle>
-        <CardDescription>Top 5 high risk regencies/cities</CardDescription>
+        <CardTitle className="text-lg font-bold">High Risk Areas</CardTitle>
+        <CardDescription>Top 5 regions with highest DBD cases</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <RadialBarChart
-            data={radialData}
-            startAngle={-90}
-            endAngle={380}
-            innerRadius={30}
-            outerRadius={110}
+          <ChartContainer
+            config={chartConfig}
+            className="mx-auto aspect-square max-h-[260px]"
           >
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel nameKey="areaName" />}
-            />
-            <RadialBar dataKey="totalCases" background>
-              <LabelList
-                position="insideStart"
-                dataKey="areaName"
-                className="fill-white capitalize mix-blend-luminosity"
-                fontSize={11}
+            <RadialBarChart
+              data={radialData}
+              startAngle={90}
+              endAngle={450}
+              innerRadius="20%"
+              outerRadius="90%"
+            >
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent hideLabel nameKey="areaName" />}
               />
-            </RadialBar>
-          </RadialBarChart>
-        </ChartContainer>
+              <RadialBar
+                dataKey="totalCases"
+                background={{ fill: "#f3f4f6" }}
+                cornerRadius={10}
+              >
+                <LabelList
+                  position="insideStart"
+                  dataKey="areaName"
+                  className="fill-white font-semibold"
+                  fontSize={11}
+                />
+              </RadialBar>
+
+              {/* Label tengah untuk total */}
+              <Label
+                position="center"
+                content={() => (
+                  <text
+                    x="50%"
+                    y="50%"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className="fill-gray-800 font-bold"
+                  >
+                    {totalSum.toLocaleString()} Cases
+                  </text>
+                )}
+              />
+            </RadialBarChart>
+          </ChartContainer>
+        </motion.div>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 leading-none font-medium">
+      <CardFooter className="flex-col gap-2 text-sm text-center">
+        <div className="flex items-center justify-center gap-2 font-medium">
           {highestRiskArea ? (
             <>
-              Highest risk in {highestRiskArea.regencyName}{" "}
-              <TrendingUp className="h-4 w-4" />
+              Highest risk:{" "}
+              <span className="text-red-600 font-semibold">
+                {highestRiskArea.regencyName}
+              </span>{" "}
+              <TrendingUp className="h-4 w-4 text-red-500" />
             </>
           ) : (
-            "No high risk areas data"
+            "No high risk data"
           )}
         </div>
-        <div className="text-muted-foreground leading-none">
-          Based on total case numbers
+        <div className="text-muted-foreground text-xs">
+          Data based on total dengue cases (latest year)
         </div>
       </CardFooter>
     </Card>

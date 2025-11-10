@@ -1,4 +1,3 @@
-// src/components/charts/DenguePieChart.tsx
 import * as React from "react";
 import { Cell, Label, Pie, PieChart } from "recharts";
 import {
@@ -24,13 +23,13 @@ import {
 } from "@/components/ui/select";
 import { useDengueCasesByProvince } from "@/hooks/useDengueData";
 
-// Color palette for provinces
+// 🌈 Palet warna epidemi (lebih lembut & informatif)
 const provinceColors = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
+  "#e63946", // merah
+  "#f3722c", // oranye
+  "#f9c74f", // kuning
+  "#90be6d", // hijau
+  "#43aa8b", // biru-hijau
 ];
 
 interface ProvinceData {
@@ -40,28 +39,19 @@ interface ProvinceData {
   caseFatalityRate: number;
 }
 
-// Dynamic chart config based on data
 const getChartConfig = (provinces: ProvinceData[]) => {
-  const config: any = {
-    cases: {
-      label: "Total Cases",
-    }
-  };
-  
+  const config: any = { cases: { label: "Total Cases" } };
   provinces.forEach((province, index) => {
     config[`province-${index + 1}`] = {
       label: province.provinceName,
       color: provinceColors[index] || provinceColors[0],
     };
   });
-  
   return config;
 };
 
 export function DenguePieChart() {
   const { provinceData, loading, error } = useDengueCasesByProvince();
-  
-  // Take top 5 provinces for pie chart
   const topProvinces = provinceData.slice(0, 5).map((province, index) => ({
     ...province,
     fill: provinceColors[index] || provinceColors[0],
@@ -69,14 +59,23 @@ export function DenguePieChart() {
   }));
 
   const id = "pie-dengue";
-  const chartConfig = React.useMemo(() => getChartConfig(topProvinces), [topProvinces]);
-
+  const chartConfig = React.useMemo(
+    () => getChartConfig(topProvinces),
+    [topProvinces]
+  );
   const [activeProvince, setActiveProvince] = React.useState(
     topProvinces[0]?.provinceName || ""
   );
 
+  React.useEffect(() => {
+    if (topProvinces.length > 0 && !activeProvince) {
+      setActiveProvince(topProvinces[0].provinceName);
+    }
+  }, [topProvinces, activeProvince]);
+
   const activeIndex = React.useMemo(
-    () => topProvinces.findIndex((item) => item.provinceName === activeProvince),
+    () =>
+      topProvinces.findIndex((item) => item.provinceName === activeProvince),
     [activeProvince, topProvinces]
   );
 
@@ -84,13 +83,10 @@ export function DenguePieChart() {
     () => topProvinces.map((item) => item.provinceName),
     [topProvinces]
   );
-
   const totalCases = topProvinces.reduce(
     (sum, item) => sum + item.totalCases,
     0
   );
-
-  // Data untuk pie chart dengan active state
   const pieData = topProvinces.map((item, index) => ({
     ...item,
     isActive: index === activeIndex,
@@ -98,47 +94,38 @@ export function DenguePieChart() {
 
   if (loading) {
     return (
-      <Card className="flex flex-col">
-        <CardHeader>
-          <CardTitle>Cases by Province</CardTitle>
-          <CardDescription>Loading data...</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-1 justify-center pb-0">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </CardContent>
+      <Card className="flex flex-col items-center justify-center h-[300px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <p className="text-sm mt-2 text-muted-foreground">Loading data...</p>
       </Card>
     );
   }
 
   if (error || topProvinces.length === 0) {
     return (
-      <Card className="flex flex-col">
-        <CardHeader>
-          <CardTitle>Cases by Province</CardTitle>
-          <CardDescription>
-            {error ? "Error loading data" : "No data available"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-1 justify-center pb-0">
-          <div className="text-muted-foreground">
-            {error ? `Error: ${error}` : "No province data to display"}
-          </div>
-        </CardContent>
+      <Card className="flex flex-col items-center justify-center h-[300px]">
+        <p className="text-muted-foreground">
+          {error ? `Error: ${error}` : "No province data to display"}
+        </p>
       </Card>
     );
   }
 
   return (
-    <Card data-chart={id} className="flex flex-col">
+    <Card data-chart={id} className="flex flex-col shadow-lg rounded-2xl">
       <ChartStyle id={id} config={chartConfig} />
-      <CardHeader className="flex-row items-start space-y-0 pb-0">
-        <div className="grid gap-1">
-          <CardTitle>Cases by Province - Pie Chart</CardTitle>
-          <CardDescription>Distribution across top 5 provinces</CardDescription>
+      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+        <div className="grid flex-1 gap-1">
+          <CardTitle> DBD Cases by Province - Pie Chart</CardTitle>
+          <CardDescription>
+            Top 5 provinces with highest dengue cases
+          </CardDescription>
         </div>
+
+        {/* Dropdown Provinsi */}
         <Select value={activeProvince} onValueChange={setActiveProvince}>
           <SelectTrigger
-            className="ml-auto h-7 w-[140px] rounded-lg pl-2.5"
+            className="hidden w-[130px] rounded-lg sm:ml-auto sm:flex"
             aria-label="Select a province"
           >
             <SelectValue placeholder="Select province" />
@@ -150,11 +137,11 @@ export function DenguePieChart() {
                 <SelectItem
                   key={province}
                   value={province}
-                  className="rounded-lg [&_span]:flex"
+                  className="rounded-lg"
                 >
                   <div className="flex items-center gap-2 text-xs">
                     <span
-                      className="flex h-3 w-3 shrink-0 rounded-xs"
+                      className="h-3 w-3 rounded-sm"
                       style={{ backgroundColor: color }}
                     />
                     {province}
@@ -165,7 +152,8 @@ export function DenguePieChart() {
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="flex flex-1 justify-center pb-0">
+
+      <CardContent className="flex justify-center pb-2">
         <ChartContainer
           id={id}
           config={chartConfig}
@@ -180,30 +168,71 @@ export function DenguePieChart() {
               data={pieData}
               dataKey="totalCases"
               nameKey="provinceName"
-              innerRadius={60}
+              innerRadius={65}
+              outerRadius={110}
               strokeWidth={2}
               startAngle={90}
               endAngle={450}
             >
+              <defs>
+                {provinceColors.map((color, i) => (
+                  <linearGradient
+                    id={`grad-${i}`}
+                    key={i}
+                    x1="0"
+                    y1="0"
+                    x2="1"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor={color} stopOpacity={1} />
+                    <stop offset="95%" stopColor={color} stopOpacity={0.9} />
+                  </linearGradient>
+                ))}
+              </defs>
+
               {pieData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={entry.fill}
-                  stroke="var(--background)"
-                  strokeWidth={entry.isActive ? 4 : 2}
+                  fill={`url(#grad-${index}) ${entry.fill}`}
+                  stroke="#001E2B"
+                  strokeWidth={entry.isActive ? 2 : 1}
                   style={{
                     filter: entry.isActive
-                      ? "drop-shadow(0 0 8px rgba(0,0,0,0.3))"
+                      ? `drop-shadow(0 0 10px ${entry.fill}90)`
                       : "none",
-                    transform: entry.isActive ? "scale(1.05)" : "scale(1)",
+                    transform: entry.isActive ? "scale(1.06)" : "scale(1)",
                     transformOrigin: "center",
                     transition: "all 0.3s ease",
                   }}
                 />
               ))}
+              {/* Gradient untuk tiap slice */}
+              <defs>
+                {provinceColors.map((color, i) => (
+                  <linearGradient
+                    id={`grad-${i}`}
+                    key={i}
+                    x1="0"
+                    y1="0"
+                    x2="1"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor={color} stopOpacity={1} />
+                    <stop offset="95%" stopColor={color} stopOpacity={0.9} />
+                  </linearGradient>
+                ))}
+              </defs>
+
+              {/* Label tengah */}
               <Label
                 content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox && topProvinces[activeIndex]) {
+                  if (
+                    viewBox &&
+                    "cx" in viewBox &&
+                    "cy" in viewBox &&
+                    topProvinces[activeIndex]
+                  ) {
+                    const activeColor = topProvinces[activeIndex].fill;
                     return (
                       <text
                         x={viewBox.cx}
@@ -214,9 +243,12 @@ export function DenguePieChart() {
                         <tspan
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
+                          className="text-3xl font-bold"
+                          fill={activeColor}
                         >
-                          {topProvinces[activeIndex].totalCases.toLocaleString()}
+                          {topProvinces[
+                            activeIndex
+                          ].totalCases.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
@@ -231,7 +263,8 @@ export function DenguePieChart() {
                           className="fill-muted-foreground text-xs"
                         >
                           {(
-                            (topProvinces[activeIndex].totalCases / totalCases) *
+                            (topProvinces[activeIndex].totalCases /
+                              totalCases) *
                             100
                           ).toFixed(1)}
                           %

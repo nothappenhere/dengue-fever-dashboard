@@ -140,7 +140,7 @@ export function DengueBarChart() {
                 tickLine={true}
                 axisLine={true}
                 tickMargin={8}
-                angle={-20}
+                angle={-35}
                 textAnchor="end"
                 height={80}
                 interval={0}
