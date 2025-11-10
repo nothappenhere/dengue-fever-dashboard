@@ -58,7 +58,7 @@ export function DengueRadialChart() {
     return (
       <Card className="flex flex-col">
         <CardHeader className="items-center pb-0">
-          <CardTitle>High Risk Areas</CardTitle>
+          <CardTitle>High Risk Areas - Radial Chart</CardTitle>
           <CardDescription>Loading data...</CardDescription>
         </CardHeader>
         <CardContent className="flex-1 pb-0 flex items-center justify-center">

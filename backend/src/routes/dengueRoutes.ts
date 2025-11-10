@@ -6,6 +6,7 @@ import {
   getDengueTrends,
   getHighRiskAreas,
   getCaseDetails,
+  getChartData,
 } from "../controllers/dengueController.js";
 // import { validateToken } from "../middlewares/validateToken.js";
 

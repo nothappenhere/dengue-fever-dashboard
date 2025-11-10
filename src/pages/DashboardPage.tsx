@@ -133,13 +133,13 @@ const Dashboard = () => {
           <DengueBarChart />
 
           {/* Line Chart - Deaths Trend */}
-          <DengueLineChart />
+          {/* <DengueLineChart /> */}
 
           {/* Pie Chart - Gender Distribution */}
           <DenguePieChart />
 
           {/* Radar Chart - Regional Comparison */}
-          <DengueRadarChart />
+          {/* <DengueRadarChart /> */}
 
           {/* Radial Chart - Age Group Distribution */}
           <DengueRadialChart />

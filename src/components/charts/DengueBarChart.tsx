@@ -14,6 +14,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useDengueCasesByRegency } from "@/hooks/useDengueData";
 
 const chartConfig = {
@@ -35,45 +42,19 @@ interface RegencyData {
 }
 
 export function DengueBarChart() {
-  const { regencyData, loading, error } = useDengueCasesByRegency(2024);
+  // dropdown tahun
+  const currentYear = new Date().getFullYear() - 1;
+  const [selectedYear, setSelectedYear] = React.useState(currentYear);
+
+  // Hook custom untuk ambil data
+  const { regencyData, loading, error } = useDengueCasesByRegency(selectedYear);
   const [activeChart, setActiveChart] =
     React.useState<keyof typeof chartConfig>("totalCases");
 
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
-          <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-4 sm:py-6">
-            <CardTitle>Cases by Regency/City</CardTitle>
-            <CardDescription>Loading data...</CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6 h-[300px] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Ambil 10 besar kabupaten/kota
+  const chartData: RegencyData[] = regencyData.slice(0, 10);
 
-  if (error) {
-    return (
-      <Card>
-        <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
-          <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-4 sm:py-6">
-            <CardTitle>Cases by Regency/City</CardTitle>
-            <CardDescription>Error loading data</CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6 h-[300px] flex items-center justify-center">
-          <div className="text-red-600">Error: {error}</div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Use regency data instead of province data
-  const chartData: RegencyData[] = regencyData.slice(0, 10); // Top 10 regencies
-
+  // Hitung total kasus dan kematian
   const total = chartData.reduce(
     (acc, curr) => ({
       totalCases: acc.totalCases + curr.totalCases,
@@ -84,70 +65,105 @@ export function DengueBarChart() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
-        <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-4 sm:py-6">
-          <CardTitle>Cases by Regency/City</CardTitle>
+      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+        <div className="grid flex-1 gap-1">
+          <CardTitle>Cases by Regency/City - Bar Chart</CardTitle>
           <CardDescription>
-            Top 10 regencies/cities with highest dengue cases
+            Top 10 regencies/cities with highest dengue cases in {selectedYear}
           </CardDescription>
         </div>
-        <div className="flex">
-          {Object.entries(chartConfig).map(([key, config]) => {
-            const chart = key as keyof typeof chartConfig;
-            return (
-              <button
-                key={chart}
-                data-active={activeChart === chart}
-                className="data-[active=true]:bg-muted/50 relative flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l sm:border-t-0 sm:border-l sm:px-8 sm:py-6"
-                onClick={() => setActiveChart(chart)}
-              >
-                <span className="text-muted-foreground text-xs">
-                  {config.label}
-                </span>
-                <span className="text-lg leading-none font-bold sm:text-xl">
-                  {total[chart].toLocaleString()}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </CardHeader>
-      <CardContent className="p-6">
-        <ChartContainer config={chartConfig} className="h-[300px] w-full">
-          <BarChart 
-            data={chartData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+
+        {/* Dropdown tahun */}
+        <Select
+          value={selectedYear.toString()}
+          onValueChange={(value) => setSelectedYear(Number(value))}
+        >
+          <SelectTrigger
+            className="hidden w-[130px] rounded-lg sm:ml-auto sm:flex"
+            aria-label="Select year"
           >
-            <CartesianGrid vertical={false} strokeDasharray="3 3" />
-            <XAxis
-              dataKey="regencyName"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              angle={-45}
-              textAnchor="end"
-              height={80}
-              interval={0}
-            />
-            <YAxis 
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              width={80}
-            />
-            <ChartTooltip
-              cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
-              content={<ChartTooltipContent labelKey="regencyName" />}
-            />
-            <Bar
-              dataKey={activeChart}
-              fill={`var(--color-${activeChart})`}
-              radius={[4, 4, 0, 0]}
-              maxBarSize={40}
-            />
-          </BarChart>
-        </ChartContainer>
-      </CardContent>
+            <SelectValue placeholder="Select year" />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="2014">2014</SelectItem>
+            <SelectItem value="2015">2015</SelectItem>
+            <SelectItem value="2016">2016</SelectItem>
+            <SelectItem value="2017">2017</SelectItem>
+            <SelectItem value="2018">2018</SelectItem>
+            <SelectItem value="2019">2019</SelectItem>
+            <SelectItem value="2020">2020</SelectItem>
+            <SelectItem value="2021">2021</SelectItem>
+            <SelectItem value="2022">2022</SelectItem>
+            <SelectItem value="2023">2023</SelectItem>
+            <SelectItem value="2024">2024</SelectItem>
+          </SelectContent>
+        </Select>
+      </CardHeader>
+
+      {loading ? (
+        <CardContent className="h-[300px] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </CardContent>
+      ) : error ? (
+        <CardContent className="h-[300px] flex items-center justify-center">
+          <div className="text-red-600">Error: {error}</div>
+        </CardContent>
+      ) : (
+        <CardContent className="p-6">
+          <div className="flex justify-end mb-4 gap-2">
+            {/* Tombol toggle antara totalCases & totalDeaths */}
+            {Object.entries(chartConfig).map(([key, config]) => {
+              const chart = key as keyof typeof chartConfig;
+              return (
+                <button
+                  key={chart}
+                  data-active={activeChart === chart}
+                  className={`px-4 py-2 rounded-md text-sm font-medium border transition-colors ${
+                    activeChart === chart
+                      ? "bg-muted/60 border-muted-foreground"
+                      : "hover:bg-muted/30 border-transparent"
+                  }`}
+                  onClick={() => setActiveChart(chart)}
+                >
+                  {config.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <ChartContainer config={chartConfig} className="h-[250px] w-full">
+            <BarChart data={chartData}>
+              <CartesianGrid vertical={true} strokeDasharray="3 3" />
+
+              <XAxis
+                dataKey="regencyName"
+                tickLine={true}
+                axisLine={true}
+                tickMargin={8}
+                angle={-20}
+                textAnchor="end"
+                height={80}
+                interval={0}
+              />
+              <YAxis tickLine={true} axisLine={true} tickMargin={8} />
+
+              <ChartTooltip
+                cursor={{ fill: "rgba(0, 0, 0, 0.8)" }}
+                content={
+                  <ChartTooltipContent labelKey="regencyName" indicator="dot" />
+                }
+              />
+
+              <Bar
+                dataKey={activeChart}
+                fill={`var(--color-${activeChart})`}
+                radius={[4, 4, 0, 0]}
+                maxBarSize={40}
+              />
+            </BarChart>
+          </ChartContainer>
+        </CardContent>
+      )}
     </Card>
   );
 }

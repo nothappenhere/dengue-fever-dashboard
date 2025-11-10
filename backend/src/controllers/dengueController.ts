@@ -119,7 +119,7 @@ export const getDengueStats = async (
           cases: parseFloat(caseTrend),
           deaths: parseFloat(deathTrend),
         },
-        dataYear: latestYear, // Tambahkan info tahun data
+        dataYear: latestYear,
       },
       topProvinces,
     });
@@ -344,17 +344,15 @@ export const getCasesByProvince = async (
  * @desc Get dengue trends over years
  * @route GET /api/dengue/trends?years=5
  */
-export const getDengueTrends = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
+export const getDengueTrends = async (req: Request, res: Response) => {
   try {
-    const { years = 5 } = req.query;
-    const currentYear = new Date().getFullYear();
-    const startYear = currentYear - parseInt(years as string);
+    const years = parseInt(req.query.years as string) || 10;
 
-    const yearlyTrends = await DengueCase.aggregate([
-      { $match: { year: { $gte: startYear, $lte: currentYear } } },
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - years + 1;
+
+    const trends = await DengueCase.aggregate([
+      { $match: { year: { $gte: startYear } } },
       {
         $group: {
           _id: "$year",
@@ -362,39 +360,25 @@ export const getDengueTrends = async (
           totalDeaths: { $sum: "$totalDeaths" },
           maleDeaths: { $sum: "$maleDeaths" },
           femaleDeaths: { $sum: "$femaleDeaths" },
-          provinceCount: { $addToSet: "$provinceCode" },
         },
       },
-      {
-        $project: {
-          year: "$_id",
-          totalCases: 1,
-          totalDeaths: 1,
-          maleDeaths: 1,
-          femaleDeaths: 1,
-          caseFatalityRate: {
-            $cond: {
-              if: { $eq: ["$totalCases", 0] },
-              then: 0,
-              else: {
-                $multiply: [{ $divide: ["$totalDeaths", "$totalCases"] }, 100],
-              },
-            },
-          },
-          affectedProvinces: { $size: "$provinceCount" },
-        },
-      },
-      { $sort: { year: 1 } },
+      { $sort: { _id: 1 } },
     ]);
 
-    sendResponse(res, 200, true, "Dengue trends retrieved successfully", {
-      trends: yearlyTrends,
-      period: `${startYear}-${currentYear}`,
-    });
-  } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : "Unknown error";
-    sendResponse(res, 500, false, "Internal server error", null, {
-      detail: errorMessage,
+    const formatted = trends.map((item) => ({
+      year: item._id,
+      totalCases: item.totalCases,
+      totalDeaths: item.totalDeaths,
+      maleDeaths: item.maleDeaths,
+      femaleDeaths: item.femaleDeaths,
+      caseFatalityRate:
+        item.totalCases > 0 ? (item.totalDeaths / item.totalCases) * 100 : 0,
+    }));
+
+    sendResponse(res, 200, true, "Trends retrieved", { trends: formatted });
+  } catch (error) {
+    sendResponse(res, 500, false, "Failed to fetch dengue trends", null, {
+      detail: (error as Error).message,
     });
   }
 };

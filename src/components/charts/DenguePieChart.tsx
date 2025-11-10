@@ -133,7 +133,7 @@ export function DenguePieChart() {
       <ChartStyle id={id} config={chartConfig} />
       <CardHeader className="flex-row items-start space-y-0 pb-0">
         <div className="grid gap-1">
-          <CardTitle>Cases by Province</CardTitle>
+          <CardTitle>Cases by Province - Pie Chart</CardTitle>
           <CardDescription>Distribution across top 5 provinces</CardDescription>
         </div>
         <Select value={activeProvince} onValueChange={setActiveProvince}>
